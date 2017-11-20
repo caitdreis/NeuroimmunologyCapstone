@@ -111,11 +111,34 @@ def findOrganism(key, dictionary, df):
 def findAge(key, dictionary, df):
     trythis = GSM_dictionary[key].split()
     for x in range(0, len(trythis)):
-        search = re.search(" age ", trythis[x])
+        search = re.search("age ", trythis[x])
         if search:
             return(trythis[(x-10):(x+10)])
         else: 
             return("Not Found")
+
+def findMouseline(key, dictionary, df):
+        search = re.search('mouse line: ([^ ]*)|Mouse line: ([^ ]*)|Mouse line ([^ ]*)|mouse line ([^ ]*)', dictionary[key])
+        if search:
+            return(search.group(0))
+        else: 
+            return("Not Found")
+
+def findCellline(key, dictionary, df):
+        search = re.search('cell line: ([^ ]*)|Cell line: ([^ ]*)|Cell line ([^ ]*)|cell line ([^ ]*)|genotype: ([^ ]*)|Genotype ([^ ]*)|genotype ([^ ]*)', dictionary[key])
+        if search:
+            return(search.group(0))
+        else: 
+            return("Not Found")
+        
+def findStrain(key, dictionary, df):
+        search = re.search('strain: ([^ ]*)|Strain: ([^ ]*)|Strain ([^ ]*)', dictionary[key])
+        if search:
+            return(search.group(0))
+        else: 
+            return("Not Found")
+        
+
 ########################################################################################
 ##use the functions
 
@@ -128,8 +151,16 @@ for index in GSM_df.index.values:
 for index in GSM_df.index.values: 
     GSM_df.loc[index, "age"] = findAge(index, GSM_dictionary, GSM_df)
 
-        
-        
+for index in GSM_df.index.values: 
+    GSM_df.loc[index, "mouseline"] = findMouseline(index, GSM_dictionary, GSM_df)
+
+for index in GSM_df.index.values: 
+    GSM_df.loc[index, "cellline"] = findCellline(index, GSM_dictionary, GSM_df)
+    
+for index in GSM_df.index.values: 
+    GSM_df.loc[index, "strain"] = findStrain(index, GSM_dictionary, GSM_df)       
+
+     
 
 ########### PRACTICE ###############################################################
 trythis = GSM_dictionary['GSM2599762'].split()
@@ -138,13 +169,12 @@ for x in range(0, len(trythis)):
     if search:
         print(trythis[(x-10):(x+10)])
         
-for x in range(1,len(GSM_dictionary['GSM2599762'])):
-    print(GSM_dictionary['GSM2599762'][x])
-    search= re.search("Publications", GSM_dictionary['GSM2599762'][x])
+
+    search= re.search('strain: ([^ ]*)', GSM_dictionary['GSM2599762'])
     if search: 
-        print(GSM_dictionary['GSM2599762'][x])
-
-print((GSM_df["age"] == "Not Found").count())
-
+        print(search.group(0))
+        
+print(GSM_dictionary['GSM2599762'])
+print(GSM_df["strain"])
 
 
