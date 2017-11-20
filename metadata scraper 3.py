@@ -101,14 +101,50 @@ def findExpType(key, dictionary, df):
             return(search.group(0))
         else: 
             return("Not Found")
+def findOrganism(key, dictionary, df):
+        search = re.search('Organism ([A-Za-z]*) ([A-Za-z]*) ', dictionary[key])
+        if search:
+            return(search.group(0))
+        else: 
+            return("Not Found")
+        
+def findAge(key, dictionary, df):
+    trythis = GSM_dictionary[key].split()
+    for x in range(0, len(trythis)):
+        search = re.search(" age ", trythis[x])
+        if search:
+            return(trythis[(x-10):(x+10)])
+        else: 
+            return("Not Found")
+########################################################################################
+##use the functions
 
 for index in GSM_df.index.values: 
     GSM_df.loc[index, "exptype"] = findExpType(index, GSM_dictionary, GSM_df)
 
-print(GSM_df["exptype"])
+for index in GSM_df.index.values: 
+    GSM_df.loc[index, "organism"] = findOrganism(index, GSM_dictionary, GSM_df)
 
+for index in GSM_df.index.values: 
+    GSM_df.loc[index, "age"] = findAge(index, GSM_dictionary, GSM_df)
 
+        
+        
 
+########### PRACTICE ###############################################################
+trythis = GSM_dictionary['GSM2599762'].split()
+for x in range(0, len(trythis)):
+    search = re.search(" age ", trythis[x])
+    if search:
+        print(trythis[(x-10):(x+10)])
+        
+for x in range(1,len(GSM_dictionary['GSM2599762'])):
+    print(GSM_dictionary['GSM2599762'][x])
+    search= re.search("Publications", GSM_dictionary['GSM2599762'][x])
+    if search: 
+        print(GSM_dictionary['GSM2599762'][x])
+
+print((GSM_df["age"] == "Not Found").count())
 
 
 
