@@ -20,7 +20,7 @@ def getgeo(series_ids):
         #download the page for the series
         page = requests.get("https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=" + id)
         #check if the page downloaded correctly
-        print(id + " Status: " + str(page.status_code))
+        print("\n"+ id + " Status: " + str(page.status_code))
     
         #create an instance of the beautiful soup class
         soup = BeautifulSoup(page.content, 'html.parser')
@@ -33,7 +33,7 @@ def getgeo(series_ids):
                 if a.get_text() == 'You can also download a list of all accessions here':
                     print(id + ": Too Many Samples: download a list of all accessions from GEO")
                     Download_manually.append(id)
-    print("\n" + "Need to Download: " + str(Download_manually))
+    print("Need to Download: " + str(Download_manually))
     return(GSM_ids)
 
 def getsamplesmanually(file_path, sample_list):
@@ -79,7 +79,7 @@ series_ids = ["GSE98563"]
 sample_ids = getgeo(series_ids)
 
 #get sample ids from manually downloaded files
-sample_ids = getsamplesmanually("C:/Users/mkw5c/documents/Neuro Capstone/GEO sample lists", sample_ids)
+#sample_ids = getsamplesmanually("C:/Users/mkw5c/documents/Neuro Capstone/GEO sample lists", sample_ids)
 
 #use the getsamplemetadata function to scrape the metadata for each sample from the GEO page
 #returns a dictionary with the sample id as the key and the metadata as a string value
@@ -97,7 +97,8 @@ GSM_df= GSM_df.fillna(0)
 #create functions to search for metadata categories
 def findExpType(key, dictionary, df):
     for line in dictionary[key]:
-        if re.search('Sample type', line):
+        search = re.search('Sample type', line)
+        if search !=  None:
             return(line)
         else: 
             return("Not Found")
