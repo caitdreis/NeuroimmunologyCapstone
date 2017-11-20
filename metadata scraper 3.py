@@ -67,7 +67,7 @@ def getsamplemetadata(sample_ids):
         
         sample_info = str()
         for td in td_tags:
-            sample_info+= str(td.get_text())
+            sample_info+= str(td.get_text()) + " "
         GSM_dict.update({id: sample_info})
     return(GSM_dict)
 
