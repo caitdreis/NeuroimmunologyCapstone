@@ -96,9 +96,9 @@ GSM_df= GSM_df.fillna(0)
 
 #create functions to search for metadata categories
 def findExpType(key, dictionary, df):
-        search = re.search('Sample type', dictionary[key])
-        if search !=  None:
-            return("Found")
+        search = re.search('Sample type ([A-Za-z]*) ', dictionary[key])
+        if search:
+            return(search.group(0))
         else: 
             return("Not Found")
 
@@ -106,7 +106,7 @@ for index in GSM_df.index.values:
     GSM_df.loc[index, "exptype"] = findExpType(index, GSM_dictionary, GSM_df)
 
 print(GSM_df["exptype"])
-    
+
 
 
 
