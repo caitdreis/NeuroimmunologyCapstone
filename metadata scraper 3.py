@@ -72,8 +72,10 @@ def getsamplemetadata(sample_ids):
     return(GSM_dict)
 
 ###################################################################################################
-
-series_ids = ["GSE98563"] 
+#GEO series IDs for which we want sample metadata
+series_ids = ["GSE98969", "GSE98563", "GSE67833", "GSE52564","GSE71585",
+                     "GSE60361", "GSE94579", "GSE87069", "GSE79819", "GSE56638", "GSE82187", 
+                     "GSE67403", "GSE74985", "GSE71453","GSE79539","GSE83948","GSE76381", "GSE98971"]
 
 #use the getgeo function to get the sample IDs for each series. 
 sample_ids = getgeo(series_ids)
@@ -87,7 +89,7 @@ GSM_dictionary = getsamplemetadata(sample_ids)
 
 #create an empty dataframe to store the metadata in
 columns = ["exptype", "organism", "mouseline", "cellline", "strain", "organ", "source",\
-           "tissue", "selectionmarker", "celltype", "treatment", "age", "devstage", "gender"]
+           "selectionmarker", "celltype", "disease_state", "age", "devstage", "gender"]
 index = sample_ids
 GSM_df = pd.DataFrame(index = index, columns = columns) 
 GSM_df= GSM_df.fillna(0) 
@@ -125,7 +127,7 @@ def findMouseline(key, dictionary, df):
             return("Not Found")
 
 def findCellline(key, dictionary, df):
-        search = re.search('cell line: ([^ ]*)|Cell line: ([^ ]*)|Cell line ([^ ]*)|cell line ([^ ]*)|genotype: ([^ ]*)|Genotype ([^ ]*)|genotype ([^ ]*)', dictionary[key])
+        search = re.search('cell line: ([^ ]*)|Cell line: ([^ ]*)|Cell line ([^ ]*)|cell line ([^ ]*)', dictionary[key])
         if search:
             return(search.group(0))
         else: 
@@ -138,6 +140,14 @@ def findStrain(key, dictionary, df):
         else: 
             return("Not Found")
         
+def findOrgan(key, dictionary, df): 
+def findSource_Tissue(key, dictionary, df):
+def findSelectionmMarker(key, dictionary, df):
+def findCelltype(key, dictionary, df):
+def findDiseaseState(key, dictionary, df):
+def findDevelopment(key, dictionary, df):
+def findGender(key, dictionary, df):
+
 
 ########################################################################################
 ##use the functions
