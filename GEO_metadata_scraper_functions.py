@@ -12,10 +12,10 @@ import os
 
 
 
-def getgeo(series_ids):
+def getsampleid(series_id):
     GSM_ids = []
     Download_manually = []
-    for id in series_ids: 
+    for id in series_id: 
         #download the page for the series
         page = requests.get("https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=" + id)
         #check if the page downloaded correctly
@@ -29,9 +29,9 @@ def getgeo(series_ids):
         for a in a_tags: 
             if a.get_text().startswith("GSM"):
                 GSM_ids.append(a.get_text())
-                if a.get_text() == 'You can also download a list of all accessions here':
-                    print(id + ": Too Many Samples: download a list of all accessions from GEO")
-                    Download_manually.append(id)
+            if a.get_text() == 'You can also download a list of all accessions here':
+                print(id + ": Too Many Samples: download a list of all accessions from GEO")
+                Download_manually.append(id)
     print("Need to Download: " + str(Download_manually))
     return(GSM_ids)
 
@@ -70,6 +70,37 @@ def getsamplemetadata(sample_ids):
         GSM_dict.update({id: sample_info.lower()})
     return(GSM_dict)
 
+####  This function extracts the first sample id for each GEO series from the GEO series page 
+####  and stores the sample id as a key in a dictionary with the series id as the value.  Then
+####  the function calls the getsamplemetadata function to get the text from the sample page. 
+
+def getfirstsample(series_id): 
+    sample_ids = {}
+    Download_manually = []
+    for id in series_id: 
+        #download the page for the series
+        page = requests.get("https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=" + id)
+        #check if the page downloaded correctly
+        print("\n"+ id + " Status: " + str(page.status_code))
+    
+        #create an instance of the beautiful soup class
+        soup = BeautifulSoup(page.content, 'html.parser')
+    
+        #find all of the "a" tags, get text from the a tags that have links to samples
+        a_tags = soup.find_all('a')
+        n = 0
+        for a in a_tags:
+            if a.get_text() == 'You can also download a list of all accessions here':
+                print(id + ": Too Many Samples: download a list of all accessions from GEO")
+                Download_manually.append(id)            
+            if a.get_text().startswith("GSM"):
+                sample_ids.update({a.get_text(): id})
+                n += 1
+            if n == 1:
+                break
+    print("Need to Download: " + str(Download_manually))
+    return(sample_ids)   
+
 ###################################################################################################
 
 #create functions to search for metadata categories
@@ -87,7 +118,7 @@ def findOrganism(key, dictionary, df):
             return(0)
         
 def findAge(key, dictionary, df):
-    trythis = GSM_dictionary[key].split()
+    trythis = dictionary[key].split()
     for x in range(0, len(trythis)):
         search = re.search("age ", trythis[x])
         if search:
@@ -165,22 +196,11 @@ def findGender(key, dictionary, df):
         return(0)
 
 if __name__ == '__main__':
-    getgeo()
+    getsampleid()
     getsamplesmanually()
     getsamplemetadata()
-    findExpType()
-    findOrganism()
-    findMouseline()
-    findCellline()
-    findStrain()
-    findAge()
-    findOrgan()
-    findSource_Tissue()
-    findSelectionMarker()
-    findCelltype()
-    findDiseaseState()
-    findDevelopment()
-    findGender()
+    getfirstsample()
+
     
 ########################################################################################
 

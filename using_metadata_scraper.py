@@ -7,10 +7,22 @@ Created on Mon Nov 27 07:40:34 2017
 from GEO_metadata_scraper_functions import *
 import pandas as pd
 
-#GEO series IDs for which we want sample metadata
-series_id = ["GSE98969", "GSE98563", "GSE67833", "GSE52564","GSE71585",
+series_to_sample = ["GSE98969","GSE98563", "GSE67833", "GSE52564","GSE71585",
                      "GSE60361", "GSE94579", "GSE87069", "GSE79819", "GSE56638", "GSE82187", 
                      "GSE67403", "GSE74985", "GSE71453","GSE79539","GSE83948","GSE76381", "GSE98971"]
+
+first_samples = getfirstsample(series_to_sample)
+metadata = getsamplemetadata(first_samples.keys())
+
+with open('first samples.txt', 'w') as file:
+    for k, v in metadata.items(): 
+        file.write(str(k) + ":  " + str(v) + "\n\n\n\n\n")
+
+
+#GEO series IDs for which we want sample metadata
+series_id = ["GSE98969"] #"GSE98563", "GSE67833", "GSE52564","GSE71585",
+                     #"GSE60361", "GSE94579", "GSE87069", "GSE79819", "GSE56638", "GSE82187", 
+                    # "GSE67403", "GSE74985", "GSE71453","GSE79539","GSE83948","GSE76381", "GSE98971"]
 
 #use the getgeo function to get the sample IDs for each series. 
 sample_ids = getsampleid(series_id)
