@@ -35,8 +35,9 @@ def getsampleid(series_id):
     print("Need to Download: " + str(Download_manually))
     return(GSM_ids)
 
-def getsamplesmanually(file_path, sample_list):
+def getsamplesmanually(file_path):
     files = []
+    sample_list = []
     for file in os.listdir(file_path):
         if file.endswith(".txt"):
             files.append(os.path.join(file_path, file))
@@ -50,6 +51,8 @@ def getsamplesmanually(file_path, sample_list):
         item.strip()
         if item.startswith("G") == False: 
             print("fix" + item)
+        if item.endswith(" ") == True: 
+            print('delete space for ' + item)
     return(sample_list)
         
         
@@ -89,111 +92,163 @@ def getfirstsample(series_id):
         #find all of the "a" tags, get text from the a tags that have links to samples
         a_tags = soup.find_all('a')
         n = 0
-        for a in a_tags:
-            if a.get_text() == 'You can also download a list of all accessions here':
-                print(id + ": Too Many Samples: download a list of all accessions from GEO")
-                Download_manually.append(id)            
+        for a in a_tags:          
             if a.get_text().startswith("GSM"):
                 sample_ids.update({a.get_text(): id})
                 n += 1
             if n == 1:
                 break
-    print("Need to Download: " + str(Download_manually))
     return(sample_ids)   
 
 ###################################################################################################
 
 #create functions to search for metadata categories
+#### FINISHED:  the function returns all data in correct format
+#### NEEDS FORMATTING:  function returns all the data and the data is correct but needs to be
+#                        formatted for consistency
+#### POINTING CORRECTLY:   the function returns data from the intended location for all samples
+#                            but parsing may have led to incorrect entry                         
+#### NEEDS MORE KEYWORDS: the function does not find the necessary information for all samples
+
+
+
+
+
+#### FINISHED
+def findSeries(key, dictionary, df):
+        search = re.search('gse[0-9]+ ', dictionary[key])
+        if search:
+            return(search.group(0))
+        else: 
+            return("Not Found")
+        
+#### FINISHED
 def findExpType(key, dictionary, df):
         search = re.search('sample type ([a-z]*) ', dictionary[key])
         if search:
             return(search.group(0))
         else: 
-            return(0)
+            return("Not Found")
+        
+#### FINISHED
 def findOrganism(key, dictionary, df):
         search = re.search('organism ([a-z]*) ([a-z]*) ', dictionary[key])
         if search:
             return(search.group(0))
         else: 
-            return(0)
-        
-def findAge(key, dictionary, df):
-    trythis = dictionary[key].split()
-    for x in range(0, len(trythis)):
-        search = re.search("age ", trythis[x])
-        if search:
-            return(trythis[(x-10):(x+10)])
-        else: 
-            return(0)
-
-def findMouseline(key, dictionary, df):
-        search = re.search('mouse line([:]?) ([^ ]*)', dictionary[key])
-        if search:
-            return(search.group(0))
-        else: 
             return("Not Found")
 
+#### NEEDS MORE KEYWORDS
+def findMouseline(key, dictionary, df, index):
+        if "j14" in df.loc[index, "cellline"]:
+            return("Lhx6-GFP")
+        else: 
+            search = re.search('mouse line([:]?) ([^ ]*)', dictionary[key])
+            if search:
+                return(search.group(0))
+            else: 
+                return("Not Found")
+
+#### NEEDS FORMATTING
 def findCellline(key, dictionary, df):
-        search = re.search('cell line([:]?) ([^ ]*)', dictionary[key])
+        search = re.search('cell line([:]?) ([^ ]*)|icell dopaneurons', dictionary[key])
         if search:
             return(search.group(0))
         else: 
-            return(0)
+            search = re.search('gse[0-9]+ ', dictionary[key])
+            if "94579|76381" in search.group(0):
+                return("Not Found")
+            else:
+                return("no cell line used")
         
+#### POINTING CORRECTLY     
 def findStrain(key, dictionary, df):
-        search = re.search('strain([:]?) ([^ ]*)', dictionary[key])
+        search = re.search('strain([:]?) ([^ ]*)|c57bl/6|cd-1|cd1|5xfad', dictionary[key])
         if search:
             return(search.group(0))
         else: 
             return("Not Found")
         
-def findOrgan(key, dictionary, df): 
-    search = re.search('organ([:]?) ([^ ]*)', dictionary[key])
-    if search:
-        return(search.group(0))
-    else: 
-        return(0)
+###  USE TISSUE DATA TO INFER ORGAN       
+#def findOrgan(index, df): 
 
+    
+    
+#### POINTING CORRECTLY
 def findSource_Tissue(key, dictionary, df):
-    search = re.search('source name([:]?) ([^ ]*)|tissue([:]?) ([^ ]*)', dictionary[key])
+    search = re.search('tissue: ([^ ]*)', dictionary[key])
     if search:
         return(search.group(0))
     else: 
-        return("Not Found")
-
+        search2 = re.search('source name([:]?) ([^ ]*)', dictionary[key])
+        if search2: 
+            return(search2.group(0))
+        else: 
+            return("Not Found")
+###  Not on most GEO sample sites... may be in the paper
 def findSelectionMarker(key, dictionary, df):
     search = re.search('selection marker([:]?) ([^ ]*)', dictionary[key])
     if search:
         return(search.group(0))
     else: 
-        return(0)
-
+        return("Not Found")
+#### POINTING CORRECTLY
 def findCelltype(key, dictionary, df):
-    search = re.search('cell type([:]?) ([^ ]*)', dictionary[key])
+    search = re.search('cell[_ ]?type([:]?) ([^ ]*)|cell population: ([^ ]*)', dictionary[key])
     if search:
         return(search.group(0))
     else: 
-        return(0)
-def findDiseaseState(key, dictionary, df):
-    search = re.search('treatment([:]?) ([^ ]*)', dictionary[key])
+        search2 = re.search('group: ([^ ]*)', dictionary[key])
+        if search2:
+            return("ES: " + str(search2.group(0)))
+        else:
+            return("Not Found")
+#### function pointing well... need to check papers for other treatments/disease states    
+def findTreatment(key, dictionary, df):
+    search = re.search('treatment: ([^ ]* )', dictionary[key])
     if search:
         return(search.group(0))
     else: 
-        return(0)
+        if df.loc[key, "series"] == "gse71453 ":
+            return("sciatic transection")
+        else:
+            return("Not Found")
+
+
+def findAge(key, dictionary, df):
+    search = re.search("age: ([a-z0-9]+) ([a-z]+) ", dictionary[key])
+    if search:
+        return(search.group(0))
+    else: 
+        search2 = re.search('[0-9]*-[0-9*] [^ ]* [^ ]* age([:]?)', dictionary[key])
+        if search2:
+            return(search2.group(0))
+        else:
+            return("Not Found")
     
 def findDevelopment(key, dictionary, df):
-    search = re.search('development stage([:]?) ([^ ]*)', dictionary[key])
+    search = re.search('developmental stage([:]?) ([^ ]*)', dictionary[key])
     if search:
         return(search.group(0))
     else: 
-        return(0)
-    
-def findGender(key, dictionary, df):
+        return("Not Found")
+
+#### Pointing Correctly  
+def findSex(key, dictionary, df):
     search = re.search('sex([:]?) ([^ ]*)|gender([:]?) ([^ ]*)', dictionary[key])
     if search:
         return(search.group(0))
     else: 
-        return(0)
+        search2 = re.search('(growth|extraction) protocol .* (extracted|library)', dictionary[key])
+        if search2:
+            search3 = re.search('male|female', search2.group(0))
+            if search3:
+                return(search3.group(0))
+            else: 
+                return("Not Found")
+        else: 
+            return("Error")
+
 
 if __name__ == '__main__':
     getsampleid()
@@ -201,25 +256,7 @@ if __name__ == '__main__':
     getsamplemetadata()
     getfirstsample()
 
-    
 ########################################################################################
-
-  
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
