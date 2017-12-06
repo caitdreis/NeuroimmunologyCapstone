@@ -139,8 +139,8 @@ def findOrganism(key, dictionary, df):
             return("Not Found")
 
 #### NEEDS MORE KEYWORDS
-def findMouseline(key, dictionary, df, index):
-        if "j14" in df.loc[index, "cellline"]:
+def findMouseline(key, dictionary, df):
+        if "j14" in df.loc[key, "cellline"]:
             return("Lhx6-GFP")
         else: 
             search = re.search('mouse line([:]?) ([^ ]*)', dictionary[key])
@@ -155,11 +155,8 @@ def findCellline(key, dictionary, df):
         if search:
             return(search.group(0))
         else: 
-            search = re.search('gse[0-9]+ ', dictionary[key])
-            if "94579|76381" in search.group(0):
-                return("Not Found")
-            else:
-                return("no cell line used")
+            return("Not Found")
+            
         
 #### POINTING CORRECTLY     
 def findStrain(key, dictionary, df):
@@ -209,7 +206,7 @@ def findTreatment(key, dictionary, df):
     if search:
         return(search.group(0))
     else: 
-        if df.loc[key, "series"] == "gse71453 ":
+        if df.loc[key, "series"] is "gse71453 ":
             return("sciatic transection")
         else:
             return("Not Found")
