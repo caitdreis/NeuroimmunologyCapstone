@@ -3,7 +3,9 @@
 # Team members
 
 Caitlin Dreisbach
+
 Morgan Wall
+
 Ali Zaidi
 
 # Advisor team: 
