@@ -207,6 +207,12 @@ def findSource_Tissue(key, dictionary, df):
     search = re.search('tissue: ([^ :]* )*[a-z]*:', dictionary[key])
     if search:
         return(search.group(0))
+    elif df.series.loc[key] == "gse87069 ":
+        search4 = re.search('tissue: .*extracted', dictionary[key])
+        if search4: 
+            return(search4.group(0))
+        else: 
+            return("Not Found")
     else: 
         search2 = re.search('source name([:]?) ([^ :]* )*[a-z]*: ', dictionary[key])
         if search2: 
@@ -223,15 +229,19 @@ def findSource_Tissue(key, dictionary, df):
 ## Not Complete        
 
 def findCelltype(key, dictionary, df):
-    search = re.search('cell[_ ]?type([:]?) ([^ ]*)|cell population: ([^ ]*)', dictionary[key])
+    search = re.search('cell[_ ]?type([:]?) ([^ :]* )*[a-z]*:|cell population: ([^ :]* )*[a-z]*:', dictionary[key])
     if search:
         return(search.group(0))
     else: 
-        search2 = re.search('group: ([^ ]*)', dictionary[key])
-        if search2:
-            return("ES: " + str(search2.group(0)))
-        else:
-            return("Not Found")       
+        search3 = re.search('cell[_ ]?type([:]?) ([^ ]*)|cell population: ([^ ]*)', dictionary[key])
+        if search3:
+            return(search3.group(0))
+        else: 
+            search2 = re.search('group: ([^ ]*)', dictionary[key])
+            if search2:
+                return("ES: " + str(search2.group(0)))
+            else:
+                return("Not Found")       
 
 ########################################################################################
 
