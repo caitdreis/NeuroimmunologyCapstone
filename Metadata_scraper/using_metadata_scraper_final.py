@@ -18,7 +18,7 @@ sample_ids = getsampleid(series_id)
 
 
 #get sample ids from manually downloaded files
-sample_ids += getsamplesmanually("C:/Users/mkw5c/Documents/NeuroimmunologyCapstone/GEO sample lists")
+sample_ids += getsamplesmanually("~/GEO sample lists")
 
 
 #use the getsamplemetadata function to scrape the metadata for each sample from the GEO page
