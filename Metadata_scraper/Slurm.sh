@@ -1,4 +1,4 @@
- #!/bin/bash
+#!/bin/bash
  
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
@@ -7,3 +7,5 @@
 #SBATCH --account=alzgen
  
 module load anaconda3
+
+./metadata.sh
