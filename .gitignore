@@ -6,3 +6,4 @@ upc.R
 Brain PCA and TSNE.ipynb
 *.R
 GEO_metadata_scraper_functions.py
+*.spydata

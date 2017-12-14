@@ -10,7 +10,7 @@ import numpy as np
 #GEO series IDs for which we want sample metadata
 series_id1 = ["GSE98969", "GSE98563", "GSE67833", "GSE52564","GSE71585"]
 series_id2 = ["GSE60361", "GSE94579", "GSE87069", "GSE79819", "GSE56638", "GSE82187"]
-series_id3 = ["GSE67403", "GSE74985", "GSE71453","GSE79539","GSE83948","GSE76381", "GSE98971"]
+series_id3 = ["GSE67403", "GSE74985", "GSE71453","GSE59739","GSE83948","GSE76381", "GSE98971"]
 
 #use the getgeo function to get the sample IDs for each series. 
 sample_ids = getsampleid(series_id1)
@@ -23,8 +23,6 @@ sample_ids += getsamplesmanually("C:/Users/mkw5c/documents/Neuro Capstone/GEO sa
 
 #use the getsamplemetadata function to scrape the metadata for each sample from the GEO page
 #returns a dictionary with the sample id as the key and the metadata as a string value
-index = np.arange(0, len(sample_ids), 1000)
-index
 
 GSM_dictionary = {}
 
@@ -45,6 +43,16 @@ GSM_dictionary.update(getsamplemetadata(sample_ids[13000:14000]))
 GSM_dictionary.update(getsamplemetadata(sample_ids[14000:15000]))
 GSM_dictionary.update(getsamplemetadata(sample_ids[15000:16000]))
 GSM_dictionary.update(getsamplemetadata(sample_ids[16000:16565]))
+
+#####  found bugs-  ran 12/13/207 2:25
+
+sample_ids = getsamplesmanually("C:/Users/mkw5c/documents/Neuro Capstone/GEO sample lists 2")
+
+GSM_dictionary.update(getsamplemetadata(sample_ids[0:300]))
+GSM_dictionary.update(getsamplemetadata(sample_ids[300:600]))
+GSM_dictionary.update(getsamplemetadata(sample_ids[600:865]))
+
+
 
 
 
