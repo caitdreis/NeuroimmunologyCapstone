@@ -264,7 +264,18 @@ GSM_df3 = GSM_df2[GSM_df2.series != "gse98970 "]
 
 
 
+##break out treatment
+#genetic background= mouse line? >>> link to specific disease
+#knockout or no
+#overexpression
+#treatment with a drug
+#treatment with any external source
+#start with more general>>get specific
+#############################################################################
 
+### move age and development stage to the correct columns
+
+GSM_df3.devstage = [row if row.lower().startswith("p")|row.lower().startswith("e") else "Not Found"  for row in GSM_df3.age ]
 
 
 
