@@ -2,7 +2,7 @@
 
 1. The File "GEO_metadata_scraper_functions_final" defines all of the functions for collecting and parsing sample information from the Gene Expression Omnibus.  
 
-2.  The spydata file "GEO_metadata_environment_pre_dataframe" is a python environment including a list of the Series IDs for our specific project, a list of the sample IDs within each of those series, and a dictionary containing key value pairs in which each sample ID is a key, and the text scraped from the corresponding GEO page for that sample as the value. 
+2.  The spydata file "GEO_metadata_environment_pre_dataframe" is a python environment including a list of the Series IDs for our specific project, and a dictionary containing key value pairs in which each sample ID is a key, and the text scraped from the corresponding GEO page for that sample as the value. 
 
 3.  The file "using_metadata_scraper_final" is a python file which uses some of the functions from the "GEO_metadata_scraper_functions_final" file to create the "GEO_metadata_environment_pre_dataframe" environment. ** This file takes a bit of time to run: if working on this specific project you can import "GEO_metadata_environment_pre_dataframe" to avoid running this file. 
 
