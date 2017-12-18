@@ -4,7 +4,7 @@ Created on Mon Nov 27 07:40:34 2017
 
 @author: mkw5c
 """
-from GEO_metadata_scraper_functions import *
+from GEO_metadata_scraper_functions_final import *
 import pandas as pd
 import numpy as np
 #GEO series IDs for which we want sample metadata
@@ -18,7 +18,7 @@ sample_ids = getsampleid(series_id)
 
 
 #get sample ids from manually downloaded files
-sample_ids += getsamplesmanually("~/GEO sample lists")
+sample_ids += getsamplesmanually("C:/Users/mkw5c/Documents/NeuroimmunologyCapstone/GEO sample lists")
 
 
 #use the getsamplemetadata function to scrape the metadata for each sample from the GEO page

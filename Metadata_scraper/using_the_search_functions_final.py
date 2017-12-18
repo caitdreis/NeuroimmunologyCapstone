@@ -5,7 +5,7 @@ Created on Wed Dec  6 18:19:46 2017
 @author: mkw5c
 """
 
-from GEO_metadata_scraper_functions import *
+from GEO_metadata_scraper_functions_final import *
 import pandas as pd
 import numpy as np
 
@@ -21,6 +21,11 @@ GSM_df = pd.DataFrame(index = index, columns = columns)
 ##use the functions
 for index in GSM_df.index.values: 
     GSM_df.loc[index, "series"] = findSeries(index, GSM_dictionary, GSM_df)
+
+GSM_df = GSM_df[GSM_df.series != "gse79816 "]
+GSM_df = GSM_df[GSM_df.series != "gse98970 "]
+
+
 
 for index in GSM_df.index.values: 
     GSM_df.loc[index, "exptype"] = findExpType(index, GSM_dictionary, GSM_df)
@@ -61,94 +66,47 @@ for index in GSM_df.index.values:
 ######################### CLEAN UP #############################################
 ### source/tissue ###
 
+
+
+GSM_df.source = [row.replace("tissue: ", "") for row in GSM_df.source]
+GSM_df.source = [row.replace("source name ", "") for row in GSM_df.source]
+GSM_df.source = [re.sub(" organism .*:", "", row) for row in GSM_df.source]
+GSM_df.source = [re.sub("cell type:", "", row) for row in GSM_df.source]
+GSM_df.source = [re.sub("selection marker:", "", row) for row in GSM_df.source]
+GSM_df.source = [re.sub("sex:", "", row) for row in GSM_df.source]
+GSM_df.source = [re.sub("strain:", "", row) for row in GSM_df.source]
+GSM_df.source = [re.sub("gender:", "", row) for row in GSM_df.source]
+GSM_df.source = [re.sub("l5 drg injury single cell|l5 drg intact single cell|l5 drg intact bulk cell", "dorsal root ganglion", row) for row in GSM_df.source]
+GSM_df.source = [re.sub("dorsal root ganglion ", "dorsal root ganglion", row) for row in GSM_df.source]
+GSM_df.source = [re.sub("whole brain |brain ", "brain", row) for row in GSM_df.source]
+GSM_df.source = [re.sub("whole cortex |cortex ", "cortex", row) for row in GSM_df.source]
+GSM_df.source = [re.sub("striatum ", "striatum", row) for row in GSM_df.source]
+GSM_df.source = [re.sub("hes da commercial|rna from es cells or differentiated es cells ", "stem cells", row) for row in GSM_df.source]
+GSM_df.source = [re.sub("developing ventral midbraincells extracted", "ventral midbrain", row) for row in GSM_df.source]
+
 GSM_df.source.value_counts()
-
-source2 = [row.replace("tissue: ", "") for row in GSM_df.source]
-GSM_df.source = source2
-
-source3 = [row.replace("source name ", "") for row in GSM_df.source]
-GSM_df.source = source3
-
-source4 = [re.sub(" organism .*:", "", row) for row in GSM_df.source]
-GSM_df.source = source4
-
-source5 = [re.sub("cell type:", "", row) for row in GSM_df.source]
-GSM_df.source = source5
-
-source6 = [re.sub("selection marker:", "", row) for row in GSM_df.source]
-GSM_df.source = source6
-
-source7 = [re.sub("sex:", "", row) for row in GSM_df.source]
-GSM_df.source = source7
-
-source8 = [re.sub("strain:", "", row) for row in GSM_df.source]
-GSM_df.source = source8
-
-source9 = [re.sub("gender:", "", row) for row in GSM_df.source]
-GSM_df.source = source9
-
-source10 = [re.sub("l5 drg injury single cell|l5 drg intact single cell|l5 drg intact bulk cell", "dorsal root ganglion", row) for row in GSM_df.source]
-GSM_df.source = source10
-
-source11 = [re.sub("dorsal root ganglion ", "dorsal root ganglion", row) for row in GSM_df.source]
-GSM_df.source = source11
-
-source12 = [re.sub("whole brain |brain ", "brain", row) for row in GSM_df.source]
-GSM_df.source = source12
-
-source13 = [re.sub("whole cortex |cortex ", "cortex", row) for row in GSM_df.source]
-GSM_df.source = source13
-
-source14 = [re.sub("striatum ", "striatum", row) for row in GSM_df.source]
-GSM_df.source = source14
-
-source15 = [re.sub("hes da commercial|rna from es cells or differentiated es cells ", "stem cells", row) for row in GSM_df.source]
-GSM_df.source = source15
-
-source16 = [re.sub("developing ventral midbraincells extracted", "ventral midbrain", row) for row in GSM_df.source]
-GSM_df.source = source16
-
 
 
 #####################################################
 
 ### Cell Type ###
 
-GSM_df.celltype.value_counts()
 missing = GSM_df[GSM_df.celltype == "Not Found"]
 missing.series.value_counts()
 
-cell2= [re.sub("protocol:|location:|age:|group:|strain:", "", row) for row in GSM_df.celltype]
-GSM_df.celltype = cell2
+GSM_df.celltype = [re.sub("protocol:|location:|age:|group:|strain:", "", row) for row in GSM_df.celltype]
+GSM_df.celltype = [re.sub("cell type: |cell population: |cell_type: ", "", row) for row in GSM_df.celltype]
+GSM_df.celltype = [re.sub("\n.*", "", row) for row in GSM_df.celltype]
+GSM_df.celltype = [re.sub("astro[^ ]*", "astrocyte", row) for row in GSM_df.celltype]
+GSM_df.celltype = [re.sub(".* pyramidal", "pyramidal", row) for row in GSM_df.celltype]
+GSM_df.celltype = [re.sub(".* granule", "granule", row) for row in GSM_df.celltype]
+GSM_df.celltype = [re.sub("cells", "cell", row) for row in GSM_df.celltype]
+GSM_df.celltype = [re.sub("munclassified|unk", "unknown", row)for row in GSM_df.celltype]
+GSM_df.celltype = [re.sub("newly|oligo", "oligodendrocyte", row)for row in GSM_df.celltype]
+GSM_df.celltype = [re.sub("myelinating", "myelinating oligodendrocyte", row)for row in GSM_df.celltype]
 
-cell3= [re.sub("cell type: |cell population: |cell_type: ", "", row) for row in GSM_df.celltype]
-GSM_df.celltype = cell3
 
-cell4 = [re.sub("\n.*", "", row) for row in GSM_df.celltype]
-GSM_df.celltype = cell4
-
-cell5 = [re.sub("astro[^ ]*", "astrocyte", row) for row in GSM_df.celltype]
-GSM_df.celltype = cell5
-
-cell6= [re.sub(".* pyramidal", "pyramidal", row) for row in GSM_df.celltype]
-GSM_df.celltype = cell6
-
-cell7= [re.sub(".* granule", "granule", row) for row in GSM_df.celltype]
-GSM_df.celltype = cell7
-
-cell8 = [re.sub("cells", "cell", row) for row in GSM_df.celltype]
-GSM_df.celltype = cell8
-
-cell9= [re.sub("munclassified|unk", "unknown", row)for row in GSM_df.celltype]
-GSM_df.celltype = cell9
-
-cell10 = [re.sub("newly|oligo", "oligodendrocyte", row)for row in GSM_df.celltype]
-GSM_df.celltype = cell10
-
-cell11 = [re.sub("myelinating", "myelinating oligodendrocyte", row)for row in GSM_df.celltype]
-GSM_df.celltype = cell11
-
-GSM_df.celltype.value_counts()
+### modifications based on GSE76381
 GSM_df.celltype = [re.sub("(hnbml|mnbml|enbml)[0-9]?", "mediolateral neuroblasts", row)for row in GSM_df.celltype]
 GSM_df.celltype = [re.sub("(hnbm|mnbm|enbm)[0-9]?", "medial neuroblast", row)for row in GSM_df.celltype]
 GSM_df.celltype = [re.sub("(homtn|momtn|eomtn)[0-9]?", "oculomotor and trochlear nucleus", row)for row in GSM_df.celltype]
@@ -174,12 +132,10 @@ GSM_df.celltype = [re.sub("radial glia-like cells.*", "radial glia-like cells ",
 GSM_df.celltype = [re.sub("lateral neuroblasts.*", "lateral neuroblasts", row)for row in GSM_df.celltype]
 GSM_df.celltype = [re.sub("progenitor.*", "progenitor", row)for row in GSM_df.celltype]
 
-
+GSM_df.celltype.value_counts()
 ################################################################################
 
 ### sex ###
-
-GSM_df.sex.value_counts()
 
 GSM_df.sex = [re.sub("\n.*", "", row) for row in GSM_df.sex]
 GSM_df.sex = [re.sub("age:", "", row) for row in GSM_df.sex]
@@ -193,11 +149,11 @@ GSM_df.sex = [re.sub("\?", "Not Found", row) for row in GSM_df.sex]
 GSM_df.sex = [re.sub("m", "male", row) for row in GSM_df.sex]
 GSM_df.sex = [re.sub("f", "female", row) for row in GSM_df.sex]
 
+
+GSM_df.sex.value_counts()
 ################################################################################3
 
 ### age ###
-
-GSM_df.age.value_counts()
 
 GSM_df.age = [row.lower() for row in GSM_df.age]
 GSM_df.age = [re.sub("\n.*|strain:|age: |inferred cell|tissue:|growth|treatment", "", row) for row in GSM_df.age]
@@ -206,62 +162,74 @@ GSM_df.age = [re.sub(" months| month", "mo", row) for row in GSM_df.age]
 GSM_df.age = [re.sub(" days| day", "d", row) for row in GSM_df.age]
 GSM_df.age = [re.sub(" days| day", "d", row) for row in GSM_df.age]
 
+
+GSM_df.age.value_counts()
 ###################################################################################
 
 ### cellline ###
 
-GSM_df.cellline.value_counts()
 GSM_df.cellline = [re.sub("\n.*", "", row) for row in GSM_df.cellline]
 
+GSM_df.cellline.value_counts()
 ################################################################################
 
 ### strain ###
 
-GSM_df.strain.value_counts()
 GSM_df.strain = [row.lower() for row in GSM_df.strain]
 GSM_df.strain = [re.sub("strain: |gender:|inferred|tissue:|organ:|genotype:|developmental", "", row) for row in GSM_df.strain]
 GSM_df.strain = [re.sub("cd-1", "cd1", row) for row in GSM_df.strain]
 
+GSM_df.strain.value_counts()
 ##################################################################################
 
 ### exptype ###
 
-GSM_df.exptype.value_counts()
 GSM_df.exptype = [re.sub("sample type ", "", row) for row in GSM_df.exptype]
 
+GSM_df.exptype.value_counts()
 ###################################################################################
 
 ### organism ###
-GSM_df.organism.value_counts()
+
 GSM_df.organism = [re.sub("organism ", "", row) for row in GSM_df.organism]
 
+GSM_df.organism.value_counts()
 ####################################################################################
 
 ### treatment ###
 
-GSM_df.treatment.value_counts()
 GSM_df.treatment = [re.sub("treatment: |variation: |developmental|sample group: |mouse", "", row) for row in GSM_df.treatment]
 GSM_df.treatment = [re.sub("\n.*|;", "", row) for row in GSM_df.treatment]
-
+GSM_df.treatment.value_counts()
 #####################################################################
 
 ### selection marker ###
-GSM_df.selectionmarker.value_counts()
-GSM_df.selectionmarker= [re.sub("treatment:|genotype/variation:|developmental", "", row) for row in GSM_df.selectionmarker]
 
+GSM_df.selectionmarker= [re.sub("treatment:|genotype/variation:|developmental", "", row) for row in GSM_df.selectionmarker]
+GSM_df.selectionmarker.value_counts()
 #########################################################################
 
 ### dev stage ###
+### (including) move age and development stage to the correct columns
 
-GSM_df.devstage.value_counts()
+
 GSM_df.devstage = [re.sub("tissue:|\n.*", "", row) for row in GSM_df.devstage]
-
+GSM_df.devstage = [row if row.lower().startswith("p")|row.lower().startswith("e") else "Not Found"  for row in GSM_df.age ]
+GSM_df.devstage.value_counts()
 #########################################################################
 
-GSM_df2 = GSM_df[GSM_df.series != "gse79816 "]
-GSM_df3 = GSM_df2[GSM_df2.series != "gse98970 "]
 
 
+
+
+##break out treatment
+#genetic background= mouse line? >>> link to specific disease
+#knockout or no
+#overexpression
+#treatment with a drug
+#treatment with any external source
+#start with more general>>get specific
+#############################################################################
 
 
 

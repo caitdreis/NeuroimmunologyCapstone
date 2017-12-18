@@ -172,13 +172,6 @@ def findTreatment(key, dictionary, df):
     else: 
         if df.series.loc[key] == "gse71453 ":
             return("sciatic transection")
-        elif (df.series.loc[key] == "gse76381 ")|(df.series.loc[key] == "gse60361 ")|\
-             (df.series.loc[key] == "gse71585 ")|(df.series.loc[key] == "gse82187 ")|\
-             (df.series.loc[key] == "gse83948 ")|(df.series.loc[key] == "gse94579 ")|\
-             (df.series.loc[key] == "gse56638 ")|(df.series.loc[key] == "gse74985 ")|\
-             (df.series.loc[key] == "gse79818 ")|(df.series.loc[key] == "gse52564 ")|\
-             (df.series.loc[key] == "gse67403 ")|(df.series.loc[key] == "gse59739 "):
-            return("healthy")
         else:
             return("Not Found")
 
@@ -264,9 +257,9 @@ def findDevelopment(key, dictionary, df):
 
 def findMouseline(key, dictionary, df):
         if df.series.loc[key] == "gse82187 ":    
-            if "neuron" in df.loc[key, "celltype"]:
+            if df.celltype.loc[key] == "neuron":
                 return("D1- tdTomato (tdTom)/D2-GFP")
-            elif "astro" in df.loc[key, "celltype"]:
+            elif df.series.loc[key] == "astro":
                 return("Aldhl1-GFP")
         else:
             search = re.search('mouse line([:]?) ([^ ]*)|mouse line abbreviation([:]?) ([^ ]*) ', dictionary[key])
