@@ -1,0 +1,2 @@
+*spydata filter=lfs diff=lfs merge=lfs -text
+*.spydata filter=lfs diff=lfs merge=lfs -text
