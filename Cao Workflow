@@ -1,0 +1,303 @@
+## ----style, echo=FALSE, results='hide', message=FALSE--------------------
+library(BiocStyle)
+library(knitr)
+opts_chunk$set(error=FALSE, message=FALSE, warning=FALSE)
+
+# Setting single-core unless explicitly specified otherwise.
+library(BiocParallel)
+register(SerialParam())
+
+# Deciding whether we want to re-download everything or not.
+on.bioc <- TRUE
+
+# Further arguments for local execution.
+opts_chunk$set(fig.asp=1)
+if (!on.bioc) {
+  opts_chunk$set(dpi=300, dev="png", dev.args=list(pointsize=15))
+  options(bitmapType="cairo", width=100)
+}
+
+## ---- message=FALSE, echo=FALSE, results='hide'--------------------------
+library(Rtsne)
+library(mvoutlier)
+library(destiny)
+
+## ---- eval=on.bioc, echo=FALSE, results='hide'---------------------------
+all.urls <- c("https://www.ncbi.nlm.nih.gov/geo/download/?acc=GSE61533&format=file&file=GSE61533%5FHTSEQ%5Fcount%5Fresults%2Exls%2Egz", 
+              "https://www.ncbi.nlm.nih.gov/geo/download/?acc=GSE29087&format=file&file=GSE29087%5FL139%5Fexpression%5Ftab%2Etxt%2Egz",
+              "https://storage.googleapis.com/linnarsson-lab-www-blobs/blobs/cortex/expression_mRNA_17-Aug-2014.txt",
+              "https://storage.googleapis.com/linnarsson-lab-www-blobs/blobs/cortex/expression_mito_17-Aug-2014.txt",
+              "https://storage.googleapis.com/linnarsson-lab-www-blobs/blobs/cortex/expression_spikes_17-Aug-2014.txt",
+              "http://www.ebi.ac.uk/teichmann-srv/espresso/static/counttable_es.csv", 
+              "http://www.nature.com/nbt/journal/v33/n2/extref/nbt.3102-S7.xlsx")
+all.basenames <- basename(all.urls)
+all.basenames[1] <- "GSE61533_HTSEQ_count_results.xls.gz"
+all.basenames[2] <- "GSE29087_L139_expression_tab.txt.gz"
+all.modes <- rep("w", length(all.urls))
+all.modes[!grepl("(txt|csv)$", all.basenames)] <- "wb"
+for (x in seq_along(all.urls)) { 
+  download.file(all.urls[x], all.basenames[x], mode=all.modes[x])
+}
+
+## ---- results='asis', eval=on.bioc, echo=FALSE---------------------------
+cat("***Note:*** *to cite this article, please refer to http://f1000research.com/articles/5-2122/v1 for instructions.*")
+
+
+#--------- SET WORKING DIRECTORY
+setwd("~/Dropbox (Personal)")
+
+#--------- DOWNLOAD
+source("http://bioconductor.org/workflows.R")
+workflowInstall("simpleSingleCell")
+
+#--------- COUNT LOADING
+install.packages("R.utils")
+library(R.utils)
+gunzip("GSE61533_HTSEQ_count_results.xls.gz", remove=FALSE, overwrite=TRUE)
+
+install.packages("readxl")
+library(readxl)
+all.counts <- as.data.frame(read_excel('GSE61533_HTSEQ_count_results.xls', sheet=1))
+rownames(all.counts) <- all.counts$ID
+all.counts <- as.matrix(all.counts[,-1])
+
+#For convenience, the counts for spike-in transcripts and endogenous genes are stored 
+#in a SingleCellExperiment object from the SingleCellExperiment package.
+install.packages("SingleCellExperiment")
+library(SingleCellExperiment)
+sce <- SingleCellExperiment(list(counts=all.counts))
+dim(sce) #[1] 38498    96
+
+#We identify the rows corresponding to ERCC spike-in transcripts from the row names. 
+#We store this information in the SingleCellExperiment object for future use. 
+#This is necessary as spike-ins require special treatment in some downstream steps 
+#such as normalization.
+is.spike <- grepl("^ERCC", rownames(sce))
+isSpike(sce, "ERCC") <- is.spike
+summary(is.spike)
+
+#We also identify the rows corresponding to mitochondrial genes, which is useful for 
+#quality control. In this case, the information can be obtained from the row names
+is.mito <- grepl("^mt-", rownames(sce))
+summary(is.mito)
+
+#--------- QUALITY CONTROL ON THE CELLS
+#For each cell, we calculate these quality control metrics using the calculateQCMetrics 
+#function from the scater package (McCarthy et al. 2016). These are stored in the 
+#row- and column-wise metadata of the SingleCellExperiment for future reference.
+install.packages("scater")
+library(scater)
+sce <- calculateQCMetrics(sce, feature_controls=list(ERCC=is.spike, Mt=is.mito))
+head(colnames(colData(sce)))
+
+#Figure 1: Histograms of various QC metrics for all cells in the HSC data set. 
+#This includes the library sizes, number of expressed genes, and proportion of 
+#reads mapped to spike-in transcripts or mitochondrial genes.
+par(mfrow=c(2,2), mar=c(5.1, 4.1, 0.1, 0.1))
+hist(sce$total_counts/1e6, xlab="Library sizes (millions)", main="", 
+     breaks=20, col="grey80", ylab="Number of cells")
+hist(sce$total_features, xlab="Number of expressed genes", main="", 
+     breaks=20, col="grey80", ylab="Number of cells")
+hist(sce$pct_counts_ERCC, xlab="ERCC proportion (%)", 
+     ylab="Number of cells", breaks=20, main="", col="grey80")
+hist(sce$pct_counts_Mt, xlab="Mitochondrial proportion (%)", 
+     ylab="Number of cells", breaks=20, main="", col="grey80")
+
+#--------- REMOVING LOW-QUALITY CELLS BASED ON OUTLIERS
+#Outliers are defined based on the median absolute deviation (MADs) from the median 
+#value of each metric across all cells. We remove cells with log-library sizes that are 
+#more than 3 MADs below the median log-library size.
+libsize.drop <- isOutlier(sce$total_counts, nmads=3, type="lower", log=TRUE)
+feature.drop <- isOutlier(sce$total_features, nmads=3, type="lower", log=TRUE)
+
+spike.drop <- isOutlier(sce$pct_counts_ERCC, nmads=3, type="higher")
+
+sce <- sce[,!(libsize.drop | feature.drop | spike.drop)]
+data.frame(ByLibSize=sum(libsize.drop), ByFeature=sum(feature.drop),
+           BySpike=sum(spike.drop), Remaining=ncol(sce))
+#ByLibSize ByFeature BySpike Remaining
+#1         2         2       3        92
+
+#--------- ALTERNATIVE APPROACHES TO QUALITY CONTROL
+## ----pcaqualplothsc, fig.cap="PCA plot for cells in the HSC dataset, constructed using quality 
+#metrics. The first and second components are shown on each axis, along with the percentage of 
+#total variance explained by each component. Bars represent the coordinates of the cells on each axis."----
+fontsize <- theme(axis.text=element_text(size=12), axis.title=element_text(size=16))
+plotPCA(sce, pca_data_input="pdata") + fontsize
+
+#--------- CLASSIFICATION OF CELL CYCLE PHASE
+set.seed(100)
+mm.pairs <- readRDS(system.file("exdata", "mouse_cycle_markers.rds", package="scran"))
+library(org.Mm.eg.db)
+ensembl <- mapIds(org.Mm.eg.db, keys=rownames(sce), keytype="SYMBOL", column="ENSEMBL")
+library(scran)
+assignments <- cyclone(sce, mm.pairs, gene.names=ensembl)
+
+## ----phaseplothsc, message=FALSE, fig.cap="Cell cycle phase scores from applying the pair-based 
+#classifier on the HSC dataset, where each point represents a cell."----
+plot(assignments$score$G1, assignments$score$G2M, 
+     xlab="G1 score", ylab="G2/M score", pch=16)
+
+sce$phases <- assignments$phases
+table(sce$phases)
+#G1 G2M   S 
+#89   2   1 
+
+#--------- EXAMINING GENE-LEVEL EXPRESSION METRICS
+## ----topgenehsc, fig.asp=1.5, fig.wide=TRUE, fig.cap="Percentage of total counts assigned to 
+#the top 50 most highly-abundant features in the HSC dataset. For each feature, each bar 
+#represents the percentage assigned to that feature for a single cell, while the circle represents 
+#the average across all cells. Bars are coloured by the total number of expressed features in each
+#cell, while circles are coloured according to whether the feature is labelled as a control feature."----
+plotQC(sce, type = "highest-expression", n=50) + fontsize
+
+## ----abhisthsc, fig.cap="Histogram of log-average counts for all genes in the HSC dataset."----
+ave.counts <- calcAverage(sce)
+hist(log10(ave.counts), breaks=100, main="", col="grey80", 
+     xlab=expression(Log[10]~"average count"))
+
+demo.keep <- ave.counts >= 1
+filtered.sce <- sce[demo.keep,]
+summary(demo.keep)
+
+## ----nexprshisthsc, fig.cap="The number of cells expressing each gene in the HSC data set, 
+#plotted against the log-average count. Intensity of colour corresponds to the number of 
+#genes at any given location."----
+num.cells <- nexprs(sce, byrow=TRUE)
+smoothScatter(log10(ave.counts), num.cells, ylab="Number of cells", 
+              xlab=expression(Log[10]~"average count"))
+
+to.keep <- num.cells > 0
+sce <- sce[to.keep,]
+summary(to.keep)
+
+#--------- NORMALIZATION OF CELL-SPECIFIC BIASES
+sce <- computeSumFactors(sce)
+summary(sizeFactors(sce))
+#Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+#0.4076  0.8101  0.9546  1.0000  1.1585  2.0264 
+
+## ----normplothsc, fig.cap="Size factors from deconvolution, plotted against library sizes for 
+#all cells in the HSC dataset. Axes are shown on a log-scale."----
+plot(sizeFactors(sce), sce$total_counts/1e6, log="xy",
+     ylab="Library size (millions)", xlab="Size factor")
+
+#computing separate size factors for spike-in transcripts
+sce <- computeSpikeFactors(sce, type="ERCC", general.use=FALSE)
+
+#--------- APPLYING THE SIZE FACTORS TO NORMALIZE GENE EXPRESSION
+sce <- normalize(sce)
+
+gc()
+#       used  (Mb) gc trigger  (Mb) max used  (Mb)
+#Ncells  4659417 248.9    6861544 366.5  6861544 366.5
+#Vcells 23616883 180.2   39742629 303.3 29842971 227.7
+
+#--------- CHECKING FOR COUNFOUNDING TECHNICAL FACTORS
+## ----explvarplothsc, fig.cap="Density plot of the percentage of variance explained by the 
+#(log-transformed) total spike-in counts across all genes in the HSC dataset. For each gene, 
+#the percentage of the variance of the normalized log-expression values across cells that is 
+#explained by each factor is calculated. Each curve corresponds to one factor and represents 
+#the distribution of percentages across all genes."----
+plotExplanatoryVariables(sce, variables=c("total_counts_ERCC", 
+                                          "log10_total_counts_ERCC")) + fontsize
+
+#--------- MODELLING THE TECHNICAL NOISE IN GENE EXPRESSION
+#fitting a trend to spike-in variances
+var.fit <- trendVar(sce, parametric=TRUE, span=0.2)
+
+var.out <- decomposeVar(sce, var.fit)
+head(var.out)
+#               mean      total         bio      tech   p.value FDR
+#0610005C13Rik 0.41698965  1.9224938 -0.43042666  2.352920 0.8976314   1
+#0610007P14Rik 6.07800839  8.3082437 -1.24081998  9.549064 0.8072030   1
+#0610008F07Rik 0.06343649  0.3702253  0.01370032  0.356525 0.3800895   1
+#0610009B22Rik 3.93889838 11.2012213 -0.58102594 11.782247 0.6135645   1
+#0610009D07Rik 8.03594711  1.3638512 -0.63517861  1.999030 0.9911969   1
+#0610009E02Rik 0.27789890  1.0950584 -0.48206851  1.577127 0.9883633   1
+
+## ----hvgplothsc, fig.cap="Variance of normalized log-expression values for each gene in the HSC 
+#dataset, plotted against the mean log-expression. The blue line represents the mean-dependent 
+#trend fitted to the variances of the spike-in transcripts (red)."----
+plot(var.out$mean, var.out$total, pch=16, cex=0.6, xlab="Mean log-expression", 
+     ylab="Variance of log-expression")
+curve(var.fit$trend(x), col="dodgerblue", lwd=2, add=TRUE)
+cur.spike <- isSpike(sce)
+points(var.out$mean[cur.spike], var.out$total[cur.spike], col="red", pch=16)
+
+## ----hvgvioplothsc, fig.cap="Violin plots of normalized log-expression values for the top 10 genes 
+#with the largest biological components in the HSC dataset. Each point represents the log-expression 
+#value in a single cell."----
+chosen.genes <- order(var.out$bio, decreasing=TRUE)[1:10]
+plotExpression(sce, features=rownames(var.out)[chosen.genes]) + fontsize
+
+#trend fitting when spike-ins are unavailable
+#var.fit.nospike <- trendVar(sce, parametric=TRUE, use.spikes=FALSE, span=0.2)
+#var.out.nospike <- decomposeVar(sce, var.fit.nospike)
+
+## ----hvgplothsc2, fig.cap="Variance of normalized log-expression values for each gene in the 
+#HSC dataset, plotted against the mean log-expression. The blue line represents the mean-dependent 
+#trend fitted to the variances of the endogenous genes (black), with spike-in transcripts shown in red."----
+#plot(var.out.nospike$mean, var.out.nospike$total, pch=16, cex=0.6, 
+#     xlab="Mean log-expression", ylab="Variance of log-expression")
+#curve(var.fit.nospike$trend(x), col="dodgerblue", lwd=2, add=TRUE)
+#points(var.out.nospike$mean[cur.spike], var.out.nospike$total[cur.spike], col="red", pch=16)
+
+#--------- DENOISING EXPRESSION VALUES USING PCA
+sce <- denoisePCA(sce, technical=var.fit$trend) 
+dim(reducedDim(sce, "PCA")) 
+#[1] 92 68 - MINE: [1] 92 10
+
+sce2 <- denoisePCA(sce, technical=var.fit$trend, value="lowrank") 
+assayNames(sce2)
+
+#--------- DATA EXPLORATION WITH DIMENSIONALITY REDUCTION
+rm(sce2)
+gc()
+
+## ----pcaplothsc, fig.cap="Pairwise PCA plots of the first three PCs in the HSC data set,
+#constructed from normalized log-expression values of genes with positive biological 
+#components. Each point represents a cell, coloured according to its total number of 
+#expressed features. Bars represent the coordinates of the cells on each axis.", 
+#fig.width=9----
+plotReducedDim(sce, use_dimred="PCA", ncomponents=3, colour_by="total_features") + fontsize
+
+## ----tsneplothsc, fig.cap="_t_-SNE plots constructed from the denoised PCs in the HSC data set,
+#using a range of perplexity values. Each point represents a cell, coloured according to its total 
+#number of expressed features. Bars represent the coordinates of the cells on each axis.", fig.width=15, fig.asp=0.5----
+out5 <- plotTSNE(sce, use_dimred="PCA", perplexity=5, colour_by="total_features", 
+                 rand_seed=100) + fontsize + ggtitle("Perplexity = 5")
+out10 <- plotTSNE(sce, use_dimred="PCA", perplexity=10, colour_by="total_features",
+                  rand_seed=100) + fontsize + ggtitle("Perplexity = 10")
+out20 <- plotTSNE(sce, use_dimred="PCA", perplexity=20, colour_by="total_features",
+                  rand_seed=100) + fontsize + ggtitle("Perplexity = 20")
+multiplot(out5, out10, out20, cols=3)
+
+#--------- INTERPRETING HETEROGENEITY ACROSS AND CONTINUUM
+pc1 <- reducedDim(sce, "PCA")[,1]
+design <- model.matrix(~pc1)
+install.packages("limma")
+library(limma)
+fit <- lmFit(logcounts(sce), design)
+fit <- eBayes(fit, trend=TRUE, robust=TRUE)
+topTable(fit)
+
+## ----heatmaphsc, fig.width=6, fig.asp=1.5, fig.cap="Heatmap of the top 50 DE genes 
+#along the first PC in the HSC data set. The colour for each cell (column) represents 
+#the log-fold change from the average log-expression for each gene (row), bounded to 
+#[-2, 2] for visualization purposes. Cells are ordered by their location on the first 
+#PC."----
+de.genes <- rownames(topTable(fit, coef=2, n=50))
+heat.vals <- logcounts(sce)[de.genes,]
+heat.vals <- heat.vals - rowMeans(heat.vals)
+heat.vals[heat.vals > 2] <- 2
+heat.vals[heat.vals < -2] <- -2
+install.packages("pheatmap")
+library(pheatmap)
+pheatmap(heat.vals[,order(pc1)], cluster_cols=FALSE)
+
+#Once the basic analysis is completed, it is often useful to save the SingleCellExperiment
+#object to file with the saveRDS function. The object can then be easily restored into 
+#new R sessions using the readRDS function. This allows further work to be conducted 
+#without having to repeat all of the processing steps described above.
+saveRDS(file="hsc_data.rds", sce)
