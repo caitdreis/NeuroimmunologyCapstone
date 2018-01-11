@@ -301,3 +301,17 @@ pheatmap(heat.vals[,order(pc1)], cluster_cols=FALSE)
 #new R sessions using the readRDS function. This allows further work to be conducted 
 #without having to repeat all of the processing steps described above.
 saveRDS(file="hsc_data.rds", sce)
+
+#--- Reading back in RDS file
+readRDS(file="hsc_data.rds")
+#class: SingleCellExperiment 
+#dim: 21269 92 
+#metadata(1): log.exprs.offset
+#assays(2): counts logcounts
+#rownames(21269): 0610005C13Rik 0610007P14Rik ... n-R5s97 n-R5s98
+#rowData names(10): is_feature_control is_feature_control_ERCC ... total_counts
+#log10_total_counts
+#colnames(92): HSC1_3 HSC1_4 ... HSC1_95 HSC1_96
+#colData names(37): total_features log10_total_features ... is_cell_control phases
+#reducedDimNames(1): PCA
+#spikeNames(1): ERCC
