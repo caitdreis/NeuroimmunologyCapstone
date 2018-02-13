@@ -31,5 +31,6 @@ write.csv(test, file = "Lun_hippocampus_test.csv",row.names=FALSE) #testing for 
 write.csv(train, file = "Lun_hippocampus_train.csv",row.names=FALSE) #training for hippocampus, 977 cells
 write.csv(test.c, file = "Lun_cortex_test.csv",row.names=FALSE) #testing for cortex, 400 cells
 write.csv(train.c, file = "Lun_cortex_train.csv",row.names=FALSE) #training for cortex, 1199 cells
+write.csv(cortex, file = "Lun_cortex.csv",row.names=FALSE)
 
 
