@@ -1,0 +1,34 @@
+#Lun Processing to Split Data
+
+setwd("~/Dropbox (Personal)/NeuroimmunologyCapstone-master 5/TFIDF")
+
+#--------- Read in Data
+data <- read.csv("processed_Lun.csv", header=TRUE)
+
+#--------- Subset by brain region
+levels(data$tissue)
+#[1] ""               "ca1hippocampus" "sscortex" 
+
+hippocampus <- data[which(data$tissue=='ca1hippocampus'), ]
+#1303 single cells from hippocampus
+
+cortex <- data[which(data$tissue=='sscortex'), ]
+#1599 single cells from cortex
+
+#--------- Create testing and training sets for autoencoder without labels
+set.seed(1)
+sample = sample(1:nrow(hippocampus), nrow(hippocampus) * .75)
+test <- hippocampus[-sample, c(7:8857)]
+train <- hippocampus[sample, c(7:8857)]
+
+set.seed(10)
+sample.c = sample(1:nrow(cortex), nrow(cortex) * .75)
+test.c <- cortex[-sample.c, c(7:8857)]
+train.c <- cortex[sample.c, c(7:8857)]
+
+#--------- Write new testing and training for subsetted data to CSV
+write.csv(test, file = "Lun_hippocampus_test.csv",row.names=FALSE) #testing for hippocampus, 326 cells
+write.csv(train, file = "Lun_hippocampus_train.csv",row.names=FALSE) #training for hippocampus, 977 cells
+write.csv(test.c, file = "Lun_cortex_test.csv",row.names=FALSE) #testing for cortex, 400 cells
+write.csv(train.c, file = "Lun_Hippocampus_train.csv",row.names=FALSE) #training for cortex, 1199 cells
+
