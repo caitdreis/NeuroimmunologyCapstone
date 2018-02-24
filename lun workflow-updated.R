@@ -314,11 +314,11 @@ saveRDS(file="hippocampus_norm.rds", hippocampus)
 
 #------  save the count data as csv and bind cluster membership
 
-hippo.mat<- as.matrix(counts(hippocampus))
+hippo.mat<- as.matrix(logcounts(hippocampus))
 hippo.df<- as.data.frame(t(hippo.mat))
 hippo.df$cluster_mem<- hippo.clusters
 
-cortex.mat<- as.matrix(counts(cortex))
+cortex.mat<- as.matrix(logcounts(cortex))
 cortex.df<- as.data.frame(t(cortex.mat))
 cortex.df$cluster_mem<- cortex.clusters
 
