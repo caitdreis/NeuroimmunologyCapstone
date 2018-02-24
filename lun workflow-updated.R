@@ -38,6 +38,10 @@ endo.data <- readFormat("C:\\Users\\mkw5c\\OneDrive\\Documents\\Neuro Capstone\\
 spike.data <- readFormat("C:\\Users\\mkw5c\\OneDrive\\Documents\\Neuro Capstone\\TFIDF\\ERCC LUN.txt")
 mito.data <- readFormat("C:\\Users\\mkw5c\\OneDrive\\Documents\\Neuro Capstone\\TFIDF\\MITO LUN.txt")
 
+#endo.data <- readFormat("expression_mRNA_17-Aug-2014.txt")
+#spike.data <- readFormat("expression_spikes_17-Aug-2014.txt")
+#mito.data <- readFormat("expression_mito_17-Aug-2014.txt")
+
 #------- Reorder Mito data to be consistent with others
 m <- match(endo.data$metadata$cell_id, mito.data$metadata$cell_id)
 mito.data$metadata <- mito.data$metadata[m,]
