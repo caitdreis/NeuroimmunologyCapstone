@@ -5,7 +5,7 @@ rownames(cortex)<- cortex[,1]
 cortex[,1]<- NULL
 
 #----- remove mitochondrial and spike in data
-cortex_red<- cortex[1:1312, c(1:19803, 19895)]
+cortex_red<- cortex[1:1677, c(1:19803, 19895)]
 
 #----- libraries
 library(readr) 
@@ -58,29 +58,25 @@ plot_cortex <- cortex_tfidf %>%
   dplyr::mutate(gene = factor(gene, levels = rev(unique(gene)))) %>%           
   dplyr::mutate(cluster = factor(cluster, levels = rev(unique(cluster))))
 
-to_print<- plot_cortex%>%
-           group_by(cluster) %>%    
-           top_n(50, tf_idf) %>%
-           ungroup() %>%
-           dplyr::mutate(gene = reorder(gene, tf_idf))
+# to_print<- plot_cortex%>%
+#            group_by(cluster) %>%    
+#            top_n(1000, tf_idf) %>%
+#            ungroup() %>%
+#            dplyr::mutate(gene = reorder(gene, tf_idf))
 
-to_print%>%
-    ggplot(aes(gene, tf_idf, fill = cluster)) +                 
-    geom_col(show.legend = FALSE) +
-    labs(x = NULL, y = "TFIDF score") +
-    facet_wrap(~cluster, ncol = 4, scales = "free") +
-    coord_flip()
+ # to_plot%>%
+ #     ggplot(aes(gene, tf_idf, fill = cluster)) +                 
+ #     geom_col(show.legend = FALSE) +
+ #     labs(x = NULL, y = "TFIDF score") +
+ #     facet_wrap(~cluster, ncol = 4, scales = "free") +
+ #     coord_flip()
     
-print_me<- arrange(to_print, cluster, desc(tf_idf))
+print_me<- arrange(plot_cortex, cluster, desc(tf_idf))
 
 save_the_genes<- function(df, clust_count){
   for (i in 1:clust_count){
     clust_genes<- df[which(df$cluster == i),c(2, 8)]
-    file = paste0("cortex_cluster_genes", i, ".rnk")
+    file =  ifelse(i < 10, paste0("cortex_0", i, ".txt"), paste0("cortex_", i, ".txt"))
     write.table(clust_genes, file, sep = "\t", row.names = F, col.names = F)}}
 
 save_the_genes(print_me, 12)
-
-
-
-
