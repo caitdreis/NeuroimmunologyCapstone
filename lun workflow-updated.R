@@ -38,10 +38,6 @@ endo.data <- readFormat("C:\\Users\\mkw5c\\OneDrive\\Documents\\Neuro Capstone\\
 spike.data <- readFormat("C:\\Users\\mkw5c\\OneDrive\\Documents\\Neuro Capstone\\TFIDF\\ERCC LUN.txt")
 mito.data <- readFormat("C:\\Users\\mkw5c\\OneDrive\\Documents\\Neuro Capstone\\TFIDF\\MITO LUN.txt")
 
-#endo.data <- readFormat("expression_mRNA_17-Aug-2014.txt")
-#spike.data <- readFormat("expression_spikes_17-Aug-2014.txt")
-#mito.data <- readFormat("expression_mito_17-Aug-2014.txt")
-
 #------- Reorder Mito data to be consistent with others
 m <- match(endo.data$metadata$cell_id, mito.data$metadata$cell_id)
 mito.data$metadata <- mito.data$metadata[m,]
@@ -250,7 +246,12 @@ pheatmap(ratio, cluster_rows=FALSE, cluster_cols=FALSE,
 
 #-------- visualize the clusters on the tSNE plot
 hippocampus$cluster <- factor(hippo.clusters)
+hippocampus2$cluster <- factor(hippo.clusters)
 plotTSNE(hippocampus2, colour_by="cluster") + fontsize
+
+###------- find cluster labels
+
+saveRDS(file="hippocampus_tsne_coord.rds", hippocampus2)
 
 ###########################################################
 ###########################################################
@@ -307,13 +308,19 @@ pheatmap(ratio, cluster_rows=FALSE, cluster_cols=FALSE,
 
 #-------- visualize the clusters on the tSNE plot
 cortex$cluster <- factor(cortex.clusters)
+cortex2$cluster<- factor(cortex.clusters)
 plotTSNE(cortex2, colour_by="cluster") + fontsize
 
+###------- find cluster labels
+
+cortex_markers <- findMarkers(cortex2, cortex.clusters, direction="up")
+cortexmarker.set <- cortex_markers[["1"]]
+head(marker.set[,1:8], 10) 
 
 #save the full normalized dataset
 saveRDS(file="hippocampus_tsne_coord.rds", hippocampus2)
 saveRDS(file="cortex_tsne_coord.rds", cortex2)
-saveRDS(file="cortex_norm.rds", cortex)
+saveRDS(cortex, "cortex_norm.rds")
 saveRDS(file="hippocampus_norm.rds", hippocampus)
 
 #------  save the count data as csv and bind cluster membership
@@ -328,5 +335,33 @@ cortex.df$cluster_mem<- cortex.clusters
 
 write.csv(hippo.df, "hippocampus_df.csv", row.names = TRUE)
 write.csv(cortex.df, "cortex_df.csv", row.names = TRUE)
+
+#------ Find clusters for Cait
+
+# hippo<- read.csv("hippocampus_df.csv")
+# rownames(hippo)<- hippo[,1]
+# hippo[,1]<- NULL
+# 
+# #----- remove mitochondrial and spike in data
+# hippo_red<- hippo[1:1312, c(1:19803, 19895)]
+# 
+# cortex<- read.csv("cortex_df.csv")
+# rownames(cortex)<- cortex[,1]
+# cortex[,1]<- NULL
+# 
+# #----- remove mitochondrial and spike in data
+# cortex_red<- cortex[1:1677, c(1:19803, 19895)]
+# 
+# for (i in 1:12){
+#     file = paste0("cortex_cluster", i, ".csv")
+#     temp_df <- cortex.df[which(cortex.df$cluster_mem == i), ]
+#     write.csv(temp_df, file)
+#   }
+#   
+# for (i in 1:16){
+#     file = paste0("hippo_cluster", i, ".csv")
+#     temp_df <- hippo.df[which(hippo.df$cluster_mem == i), ]
+#     write.csv(temp_df, file)
+#  }
 
 

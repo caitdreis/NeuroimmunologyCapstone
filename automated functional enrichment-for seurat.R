@@ -15,8 +15,8 @@ library(clusterProfiler)
 
 #----- set paths
 
-path_to_read = "C:\\Users\\mkw5c\\OneDrive\\Documents\\Neuro Capstone\\SPRING\\autoencoder genesets 3.25\\"
-path_to_write  = "C:\\Users\\mkw5c\\OneDrive\\Documents\\Neuro Capstone\\SPRING\\autoencoder results 3.26\\"
+path_to_read = "C:\\Users\\mkw5c\\OneDrive\\Documents\\Neuro Capstone\\SPRING\\seurat genesets 3.22\\"
+path_to_write  = "C:\\Users\\mkw5c\\OneDrive\\Documents\\Neuro Capstone\\SPRING\\seurat results 3.23\\"
 
 #-----define the files that you want to perform the enrichment on
 
@@ -25,32 +25,15 @@ path_to_write  = "C:\\Users\\mkw5c\\OneDrive\\Documents\\Neuro Capstone\\SPRING\
 
 files = dir(path_to_read, 
             recursive = TRUE, 
-            pattern="*.tsv", 
+            pattern="*.csv", 
             full.names=T)
-
-#----- GSEA run the analysis!
-
-for (file in files){
-  d <- read.delim(file, header = F)
-  gene_list<- d[,2]
-  names(gene_list)<- as.character(d[,1])
-  gene_list<- sort(gene_list, decreasing = T)
-  
-  GSEA_results<- gseGO(gene_list, ont = "BP", OrgDb = "org.Mm.eg.db", keyType = "SYMBOL", exponent = 1,
-                       nPerm = 1000, minGSSize = 10, maxGSSize = 2000, pvalueCutoff = 0.05,
-                       pAdjustMethod = "BH", verbose = F, by = "fgsea")
-
-  file = paste0("ae50_GSEAresults_cluster", substr(file, 111, 112), "_", substr(file, 114, 119),
-                "node", substr(file,134,135), ".csv")
-  write.csv(as.data.frame(GSEA_results), paste0(path_to_write, file))
-}
 
 
 #----- OREA run the analysis!
 
 for (file in files){
-  d <- read.delim(file, header = F)
-  gene_list<- d[,2]
+  d <- read.csv(file, header = F)
+  gene_list<- d[,3]
   names(gene_list)<- as.character(d[,1])
   gene_list<- sort(gene_list, decreasing = T)
   
@@ -58,8 +41,8 @@ for (file in files){
                           pvalueCutoff = 0.05, pAdjustMethod = "BH", universe = names(gene_list), qvalueCutoff = 0.2,
                           minGSSize = 10, maxGSSize = 1000)
   
-  file = paste0("ae_OREAresults_cluster", substr(file, 111, 112), "_", substr(file, 114, 119), "_node", substr(file, 134, 135), ".csv")
-  write.csv(OREA_results, paste0(path_to_write, file, ".csv"))
+  file = paste0("DE_OREAresults_cluster", substr(file, 95, 96), "_", substr(file, 81, 86), "top500.csv")
+  write.csv(OREA_results, paste0(path_to_write, file))
   
 }
 
